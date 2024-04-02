@@ -432,6 +432,8 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 						baseOutputStream_.Dispose();
 					}
 				}
+
+				buffer_ = null;
 			}
 		}
 

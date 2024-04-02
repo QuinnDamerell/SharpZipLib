@@ -11,7 +11,7 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 	/// <remarks>
 	/// The buffer supports decryption of incoming data.
 	/// </remarks>
-	public class InflaterInputBuffer
+	public class InflaterInputBuffer : IDisposable
 	{
 		#region Constructors
 
@@ -267,6 +267,25 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 		public long ReadLeLong()
 		{
 			return (uint)ReadLeInt() | ((long)ReadLeInt() << 32);
+		}
+
+		/// <summary>
+		/// Implements the dispose method of the <see cref="IDisposable"/> interface.
+		/// </summary>
+		public void Dispose()
+		{
+			if(rawData != null)
+			{
+				rawData = null;
+			}
+			if(clearText != null)
+			{
+				clearText = null;
+			}
+			if(internalClearText != null)
+			{
+				internalClearText = null;
+			}
 		}
 
 		/// <summary>
@@ -637,6 +656,11 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 				InflaterPool.Instance.Return(inflater);
 			}
 			inf = null;
+
+			if(inputBuffer != null)
+			{
+				inputBuffer.Dispose();
+			}
 		}
 
 		/// <summary>
