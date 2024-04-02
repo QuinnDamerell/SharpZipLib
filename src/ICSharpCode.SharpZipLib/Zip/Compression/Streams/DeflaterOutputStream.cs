@@ -236,7 +236,10 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 		/// </param>
 		protected void EncryptBlock(byte[] buffer, int offset, int length)
 		{
-		    if(cryptoTransform_ is null) return;
+			if(cryptoTransform_ is null)
+			{
+				return;
+			}
 			cryptoTransform_.TransformBlock(buffer, 0, length, buffer, 0);
 		}
 
