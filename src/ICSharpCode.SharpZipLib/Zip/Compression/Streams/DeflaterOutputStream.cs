@@ -1,5 +1,6 @@
 using ICSharpCode.SharpZipLib.Encryption;
 using System;
+using System.Buffers;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -83,7 +84,16 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 			}
 
 			baseOutputStream_ = baseOutputStream;
-			buffer_ = new byte[bufferSize];
+
+			if(ArrayPool<byte>.Shared != null)
+			{
+				buffer_ = ArrayPool<byte>.Shared.Rent(bufferSize);
+				isBufferOwnedByArrayPool_ = true;
+			}
+			else
+			{
+				buffer_ = new byte[bufferSize];
+			}
 			deflater_ = deflater ?? throw new ArgumentNullException(nameof(deflater));
 		}
 
@@ -433,6 +443,11 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 					}
 				}
 
+				// Ensure buffer is returned to the pool if it was rented from it.
+				if(isBufferOwnedByArrayPool_)
+				{
+					ArrayPool<byte>.Shared.Return(buffer_);
+				}
 				buffer_ = null;
 			}
 		}
@@ -541,6 +556,11 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 		/// deflater and write them to the underlying output stream.
 		/// </summary>
 		private byte[] buffer_;
+
+		/// <summary>
+		/// If true, this buffer is owned by the array pool and should be returned there on Dispose.
+		/// </summary>
+		private bool isBufferOwnedByArrayPool_;
 
 		/// <summary>
 		/// The deflater which is used to deflate the stream.

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.IO;
 using System.Security.Cryptography;
 using ICSharpCode.SharpZipLib.Core;
@@ -36,7 +37,16 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 			{
 				bufferSize = 1024;
 			}
-			rawData = new byte[bufferSize];
+
+			if(ArrayPool<bool>.Shared != null)
+			{
+				rawData = ArrayPool<byte>.Shared.Rent(bufferSize);
+				isRawDataOwnedByArrayPool = true;
+			}
+			else
+			{
+				rawData = new byte[bufferSize];
+			}
 			clearText = rawData;
 		}
 
@@ -274,18 +284,13 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 		/// </summary>
 		public void Dispose()
 		{
-			if(rawData != null)
+			if(isRawDataOwnedByArrayPool)
 			{
-				rawData = null;
+				ArrayPool<byte>.Shared.Return(rawData);
 			}
-			if(clearText != null)
-			{
-				clearText = null;
-			}
-			if(internalClearText != null)
-			{
-				internalClearText = null;
-			}
+			rawData = null;
+			clearText = null;
+			internalClearText = null;
 		}
 
 		/// <summary>
@@ -325,6 +330,7 @@ namespace ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
 		private int rawLength;
 		private byte[] rawData;
+		private bool isRawDataOwnedByArrayPool = false;
 
 		private int clearTextLength;
 		private byte[] clearText;
